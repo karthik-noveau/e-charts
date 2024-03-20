@@ -1,23 +1,42 @@
-import logo from './logo.svg';
-import './App.css';
+import { EChart } from "./components";
+import { basicAreaChart } from "./components/options_config/basicAreaChart";
+import { DoughnutChartOptions } from "./components/options_config/doughnutChart";
+import { horizontalBarChartOptions } from "./components/options_config/horizontalBarChart";
+import { lineChartOptions } from "./components/options_config/lineChart";
+import { pieChartOptions } from "./components/options_config/pieChart";
+import { scatterChartOptions } from "./components/options_config/scatterChart";
+import { stackedAreaChartOptions } from "./components/options_config/stackedAreaChart";
+import { stackedVerticalBarChartOptions } from "./components/options_config/stackedVerticalBarChart";
+import { verticalBarChartOptions } from "./components/options_config/verticalBarChart";
+
+import "./components/styles.css";
 
 function App() {
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+    <div className="mainContainer">
+      <EChart options={pieChartOptions} />
+      <EChart options={DoughnutChartOptions} />
+      <EChart options={verticalBarChartOptions} />
+      <EChart options={horizontalBarChartOptions} />
+      <EChart options={stackedVerticalBarChartOptions} />
+      <EChart options={lineChartOptions} />
+      <EChart options={scatterChartOptions} />
+      <EChart
+        options={{
+          ...basicAreaChart,
+        }}
+      />
+      <EChart
+        options={{
+          // aria: {
+          //   enabled: true,
+          //   decal: {
+          //     show: true,
+          //   },
+          // },
+          ...stackedAreaChartOptions,
+        }}
+      />
     </div>
   );
 }
