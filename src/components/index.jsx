@@ -41,6 +41,38 @@ export function EChart({ options }) {
 
           break;
         }
+        case "scatter": {
+          let parentNode = params.event.event.target.parentElement;
+          let parentRect =
+            params.event.event.target.parentElement.getBoundingClientRect();
+          let childRect = params.event.event.target.getBoundingClientRect();
+
+          const transformAttributeValue =
+            params.event.event.target.attributes.transform.nodeValue;
+          console.log(transformAttributeValue);
+
+          // Extract translation values from the transform attribute
+          const [, , , , , horizontalTranslation, verticalTranslation] =
+            transformAttributeValue
+              .match(
+                /matrix\(([^,]+),([^,]+),([^,]+),([^,]+),([^,]+),([^,]+)\)/
+              )
+              .map(parseFloat);
+
+          console.log("Horizontal Translation:", horizontalTranslation);
+          console.log("Vertical Translation:", verticalTranslation);
+
+          const svgNS = "http://www.w3.org/2000/svg";
+          const circle = document.createElementNS(svgNS, "circle");
+          circle.setAttribute("r", childRect.width / 2);
+          circle.setAttribute("cx", horizontalTranslation);
+          circle.setAttribute("cy", verticalTranslation);
+          circle.setAttribute("fill", "url(#svg-pattern)");
+
+          parentNode.appendChild(circle);
+
+          break;
+        }
         default: {
           console.log("default", params);
           // uppend the path to <g> node
