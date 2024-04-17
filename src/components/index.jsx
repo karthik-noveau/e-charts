@@ -5,6 +5,7 @@ import { SVGRenderer } from "echarts/renderers";
 import {
   getCustomSvgPath,
   getCustomSvgDefsPattern,
+  getCustomCircleNode,
 } from "./svgPatternConfig.js";
 
 export function EChart({ options }) {
@@ -21,6 +22,8 @@ export function EChart({ options }) {
       }
     );
 
+    myChart.setOption(options);
+
     // uppend the defs pattern to dom <svg> node
     const svgElement = myChart.getZr().painter.root.firstChild.firstChild;
     svgElement.appendChild(getCustomSvgDefsPattern());
@@ -31,50 +34,33 @@ export function EChart({ options }) {
     });
 
     myChart.on("mouseover", function (params) {
+      let a = myChart.getOption().series[params.seriesIndex].areaStyle;
+      console.log(
+        "areaStyle ",
+        myChart.getOption().series[params.seriesIndex].areaStyle
+      );
       switch (params.componentSubType) {
         case "line": {
-          let parentNode = params.event.event.target.parentElement;
-          if (parentNode.attributes["clip-path"]?.nodeName === "clip-path") {
-            console.log("mouser over parantNode", parentNode);
-            parentNode.appendChild(getCustomSvgPath(params));
+          if (a) {
+            let targetNode = params.event.event.target;
+            console.log("targetNode", targetNode);
+            let parentNode = targetNode.parentElement;
+            if (parentNode?.attributes["clip-path"]?.nodeName === "clip-path") {
+              let path = getCustomSvgPath(params);
+              parentNode.appendChild(path);
+            }
+            if (targetNode.nodeName === "path") {
+              return targetNode;
+            }
           }
-
           break;
         }
         case "scatter": {
           let parentNode = params.event.event.target.parentElement;
-          let parentRect =
-            params.event.event.target.parentElement.getBoundingClientRect();
-          let childRect = params.event.event.target.getBoundingClientRect();
-
-          const transformAttributeValue =
-            params.event.event.target.attributes.transform.nodeValue;
-          console.log(transformAttributeValue);
-
-          // Extract translation values from the transform attribute
-          const [, , , , , horizontalTranslation, verticalTranslation] =
-            transformAttributeValue
-              .match(
-                /matrix\(([^,]+),([^,]+),([^,]+),([^,]+),([^,]+),([^,]+)\)/
-              )
-              .map(parseFloat);
-
-          console.log("Horizontal Translation:", horizontalTranslation);
-          console.log("Vertical Translation:", verticalTranslation);
-
-          const svgNS = "http://www.w3.org/2000/svg";
-          const circle = document.createElementNS(svgNS, "circle");
-          circle.setAttribute("r", childRect.width / 2);
-          circle.setAttribute("cx", horizontalTranslation);
-          circle.setAttribute("cy", verticalTranslation);
-          circle.setAttribute("fill", "url(#svg-pattern)");
-
-          parentNode.appendChild(circle);
-
+          parentNode.appendChild(getCustomCircleNode(params));
           break;
         }
         default: {
-          console.log("default", params);
           // uppend the path to <g> node
           let parentNode = params.event.event.target.parentElement;
           parentNode && parentNode.appendChild(getCustomSvgPath(params));
@@ -84,33 +70,38 @@ export function EChart({ options }) {
 
     myChart.on("mouseout", function (params) {
       let selectedTarget = params.event.event.target;
-      let childNodes = selectedTarget.parentNode.childNodes;
-
-      console.log("mouseout target node", selectedTarget);
 
       if (selectedTarget.nodeName === "svg") {
-        const childNodeList = Array.from(selectedTarget.childNodes);
-        childNodeList.forEach((item) => {
-          if (item.nodeName === "g") {
-            let childNodeList = item.childNodes;
-            childNodeList.forEach((item) => {
-              if (item.attributes?.id?.nodeValue === "svg-pattern") {
-                item.parentNode.removeChild(item);
-              }
-            });
+        const svgNodeChildList = Array.from(selectedTarget.childNodes);
+
+        let selectedNode = "";
+        svgNodeChildList.forEach((svgChild) => {
+          if (svgChild.nodeName === "g") {
+            selectedNode = svgChild;
+          }
+        });
+
+        selectedNode.childNodes.forEach((node) => {
+          if (
+            params.componentSubType === "scatter" &&
+            node.nodeName === "circle"
+          ) {
+            if (node.attributes.id.nodeValue === "svg-pattern") {
+              selectedNode.removeChild(node);
+            }
+          } else if (node.attributes?.id?.nodeValue === "svg-pattern") {
+            node.parentNode.removeChild(node);
           }
         });
       } else {
-        const childNodeList = Array.from(childNodes);
-        childNodeList.forEach((item) => {
+        const gNodeChildList = Array.from(selectedTarget.parentNode.childNodes);
+        gNodeChildList.forEach((item) => {
           if (item.attributes?.id?.nodeValue === "svg-pattern") {
             item.parentNode.removeChild(item);
           }
         });
       }
     });
-
-    myChart.setOption(options);
 
     return () => {
       myChart.dispose();

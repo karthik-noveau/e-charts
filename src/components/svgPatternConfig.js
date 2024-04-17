@@ -1,4 +1,4 @@
-const patternId = "svg-pattern";
+const PATTERN_ID = "svg-pattern";
 
 export const getCustomSvgDefsPattern = () => {
   // Create the pattern element
@@ -7,7 +7,7 @@ export const getCustomSvgDefsPattern = () => {
     "pattern"
   );
 
-  pattern.setAttribute("id", patternId);
+  pattern.setAttribute("id", PATTERN_ID);
   pattern.setAttribute("x", "0");
   pattern.setAttribute("y", "0");
   pattern.setAttribute("width", "8");
@@ -54,12 +54,10 @@ export const getCustomSvgDefsPattern = () => {
 
 export const getCustomSvgPath = (params) => {
   let selectedPathDValue;
-  switch (params.componentSubType) {
-    case "bar":
-      selectedPathDValue = params.event.target.__svgPathBuilder._str;
-      break;
-    default:
-      selectedPathDValue = params.event.event.toElement.attributes?.d?.value;
+  if (params.componentSubType === "bar") {
+    selectedPathDValue = params.event.target.__svgPathBuilder._str;
+  } else {
+    selectedPathDValue = params.event.event.toElement.attributes?.d?.value;
   }
 
   // Create a new path element
@@ -68,8 +66,31 @@ export const getCustomSvgPath = (params) => {
     "path"
   );
   pathElement.setAttribute("d", selectedPathDValue);
-  pathElement.setAttribute("id", patternId);
-  pathElement.setAttribute("fill", `url(#${patternId})`);
+  pathElement.setAttribute("id", PATTERN_ID);
+  pathElement.setAttribute("fill", `url(#${PATTERN_ID})`);
 
   return pathElement;
+};
+
+export const getCustomCircleNode = (params) => {
+  let childRect = params.event.event.target.getBoundingClientRect();
+
+  const transformAttributeValue =
+    params.event.event.target.attributes.transform.nodeValue;
+
+  // Extract translation values from the transform attribute
+  const [, , , , , horizontalTranslation, verticalTranslation] =
+    transformAttributeValue
+      .match(/matrix\(([^,]+),([^,]+),([^,]+),([^,]+),([^,]+),([^,]+)\)/)
+      .map(parseFloat);
+
+  const svgNS = "http://www.w3.org/2000/svg";
+  const circle = document.createElementNS(svgNS, "circle");
+  circle.setAttribute("r", childRect.width / 2);
+  circle.setAttribute("id", PATTERN_ID);
+  circle.setAttribute("cx", horizontalTranslation);
+  circle.setAttribute("cy", verticalTranslation);
+  circle.setAttribute("fill", "url(#svg-pattern)");
+
+  return circle;
 };
