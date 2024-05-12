@@ -42,7 +42,7 @@ export const stackedAreaChartOptions = {
       name: "Email",
       type: "line",
       stack: "Total",
-      areaStyle: { color: "red" },
+      areaStyle: { color: "gray" },
       emphasis: {
         focus: "series",
       },
@@ -53,7 +53,7 @@ export const stackedAreaChartOptions = {
       name: "Union Ads",
       type: "line",
       stack: "Total",
-      areaStyle: { color: "green" },
+      areaStyle: { color: "black" },
       emphasis: {
         focus: "series",
       },

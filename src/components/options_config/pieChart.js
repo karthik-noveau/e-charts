@@ -17,7 +17,7 @@ export const pieChartOptions = {
           shadowOffsetX: 0,
           shadowColor: "rgba(0, 0, 0, 0.5)",
         },
-        scaleSize: 0,
+        scaleSize: 2,
       },
     },
   ],
