@@ -9,7 +9,6 @@ export function EChart({ options }) {
 
   useEffect(() => {
     echarts.use([SVGRenderer]);
-
     var chart = echarts.init(
       document.getElementById(`main${uniqueId.current}`),
       null,
@@ -17,9 +16,7 @@ export function EChart({ options }) {
         renderer: "svg",
       }
     );
-
     chart.setOption(options);
-
     eventConfiguration(chart);
 
     return () => {

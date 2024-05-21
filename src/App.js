@@ -15,7 +15,7 @@ import { lineChartOptions } from "./components/options_config/lineChart";
 function App() {
   return (
     <div className="mainContainer">
-      <EChart options={pieChartOptions} />
+      {/* <EChart options={pieChartOptions} /> */}
       {/* <EChart options={DoughnutChartOptions} /> */}
       {/* <EChart options={scatterChartOptions} /> */}
       {/* <EChart options={horizontalBarChartOptions} /> */}
@@ -24,7 +24,7 @@ function App() {
 
       {/* <EChart options={lineChartOptions} />  */}
 
-      {/* <EChart options={basicAreaChart} /> */}
+      <EChart options={basicAreaChart} />
       {/* <EChart options={stackedAreaChartOptions} /> */}
     </div>
   );

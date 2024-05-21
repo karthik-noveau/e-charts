@@ -1,4 +1,4 @@
-const PATTERN_ID = "svg-pattern";
+export const DEF_PATTERN_ID = "custum-pattern";
 
 export const getCustomSvgDefsPattern = () => {
   // Create the pattern element
@@ -7,11 +7,11 @@ export const getCustomSvgDefsPattern = () => {
     "pattern"
   );
 
-  pattern.setAttribute("id", PATTERN_ID);
+  pattern.setAttribute("id", DEF_PATTERN_ID);
   pattern.setAttribute("x", "0");
   pattern.setAttribute("y", "0");
-  pattern.setAttribute("width", "8");
-  pattern.setAttribute("height", "8");
+  pattern.setAttribute("width", "18");
+  pattern.setAttribute("height", "10");
   pattern.setAttribute("patternUnits", "userSpaceOnUse");
   pattern.setAttribute(
     "patternTransform",
@@ -20,13 +20,13 @@ export const getCustomSvgDefsPattern = () => {
 
   // Create the SVG element
   const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-  svg.setAttribute("width", "5");
-  svg.setAttribute("height", "5");
+  svg.setAttribute("width", "8");
+  svg.setAttribute("height", "16");
   svg.setAttribute("viewBox", "0 0 100 100");
 
   const group = document.createElementNS("http://www.w3.org/2000/svg", "g");
-  group.setAttribute("fill", "rgb(0,0,0)");
-  group.setAttribute("opacity", "0.4");
+  // group.setAttribute("fill", "white");
+  // group.setAttribute("opacity", "0.4");
 
   const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
   path.setAttribute("d", "M0,60 L0,160 L20,160 L20,60 Z");
@@ -58,7 +58,7 @@ export const getCustomAreaDefsPattern = () => {
   pattern.setAttribute("width", "8");
   pattern.setAttribute("height", "8");
   pattern.setAttribute("patternUnits", "userSpaceOnUse");
-  pattern.setAttribute("id", `area-${PATTERN_ID}`);
+  pattern.setAttribute("id", `${DEF_PATTERN_ID}`);
   pattern.setAttribute(
     "patternTransform",
     "translate(8, 8) rotate(135) skewX(0)"
@@ -68,23 +68,15 @@ export const getCustomAreaDefsPattern = () => {
 
   const path1 = document.createElementNS("http://www.w3.org/2000/svg", "path");
   path1.setAttribute("d", "M0 -7l1 0l0 4l-1 0Z");
-  path1.setAttribute("fill", "rgb(0,0,0)");
-  path1.setAttribute("fill-opacity", "0.4");
 
   const path2 = document.createElementNS("http://www.w3.org/2000/svg", "path");
   path2.setAttribute("d", "M1 -7l1 0l0 4l-1 0Z");
-  path2.setAttribute("fill", "rgb(0,0,0)");
-  path2.setAttribute("fill-opacity", "0.4");
 
   const path3 = document.createElementNS("http://www.w3.org/2000/svg", "path");
   path3.setAttribute("d", "M0 0l1 0l0 4l-1 0Z");
-  path3.setAttribute("fill", "rgb(0,0,0)");
-  path3.setAttribute("fill-opacity", "0.4");
 
   const path4 = document.createElementNS("http://www.w3.org/2000/svg", "path");
   path4.setAttribute("d", "M1 0l1 0l0 4l-1 0Z");
-  path4.setAttribute("fill", "rgb(0,0,0)");
-  path4.setAttribute("fill-opacity", "0.4");
 
   gNode.appendChild(path1);
   gNode.appendChild(path2);
@@ -97,68 +89,68 @@ export const getCustomAreaDefsPattern = () => {
 };
 
 export const getCustomSvgPath = (params) => {
-  // get D value of PATH
-  let selectedPathDValue;
-  if (params.componentSubType === "bar") {
-    selectedPathDValue = params.event.target.__svgPathBuilder._str;
-  } else {
-    selectedPathDValue = params.event.target.__svgPathBuilder._str;
-  }
+  let pathDValue = params.event.target?.__svgPathBuilder?._str;
+  if (!pathDValue) return;
 
-  // construct pattern ID
-  let targetNode = params.event.event.target;
-  let patternID = "";
-  if (
-    params.componentSubType === "line" &&
-    targetNode.nodeName === "path" &&
-    targetNode.attributes["transform"]?.nodeName !== "transform"
-  ) {
-    patternID = `area-${PATTERN_ID}`;
-  } else {
-    patternID = PATTERN_ID;
-  }
+  // let targetNode = params.event.event.target;
+  let patternID = "custum-path";
+
+  // if (
+  //   params.componentSubType === "line" &&
+  //   targetNode.nodeName === "path" &&
+  //   targetNode.attributes["transform"]?.nodeName !== "transform"
+  // ) {
+  //   patternID = `area-${DEF_PATTERN_ID}`; // if area chart
+  // } else {
+  //   patternID = DEF_PATTERN_ID;
+  // }
 
   // Create a path element
   const pathElement = document.createElementNS(
     "http://www.w3.org/2000/svg",
     "path"
   );
-  pathElement.setAttribute("d", selectedPathDValue);
+  pathElement.setAttribute("d", pathDValue);
   pathElement.setAttribute("id", patternID);
-  pathElement.setAttribute("fill", `url(#${patternID})`);
+  pathElement.setAttribute("fill", `url(#${DEF_PATTERN_ID})`);
 
+  let styles = params.event.target.style;
+  if (styles.stroke) {
+    pathElement.setAttribute("stroke", styles.stroke);
+    pathElement.setAttribute("stroke-width", styles.lineWidth);
+    pathElement.setAttribute("stroke-linejoin", styles.lineJoin);
+  }
   return pathElement;
 };
 
 export const getCustomCircleNode = (params) => {
-  let childRect = params.event.event.target.getBoundingClientRect();
+  // let childRect = targetNode.getBoundingClientRect();
+  let pathDValue = params.event.target.transform;
 
-  const transformAttributeValue =
-    params.event.event.target.attributes.transform?.nodeValue;
+  let cx = "";
+  let cy = "";
+  let radius = "";
 
-  // Extract translation values from the transform attribute
-
-  const matchResult =
-    transformAttributeValue &&
-    transformAttributeValue.match(
-      /matrix\(([^,]+),([^,]+),([^,]+),([^,]+),([^,]+),([^,]+)\)/
-    );
-  let horizontalTranslationValue = "";
-  let verticalTranslationValue = "";
-  if (matchResult) {
-    const [, , , , , horizontalTranslation, verticalTranslation] =
-      matchResult.map(parseFloat);
-    verticalTranslationValue = verticalTranslation;
-    horizontalTranslationValue = horizontalTranslation;
+  if (pathDValue) {
+    const [, , , radiusValue, cxValue, cyValue] = pathDValue.map(parseFloat);
+    cy = cyValue;
+    cx = cxValue;
+    radius = radiusValue;
   }
 
-  const svgNS = "http://www.w3.org/2000/svg";
-  const circle = document.createElementNS(svgNS, "circle");
-  circle.setAttribute("r", childRect.width / 2);
-  circle.setAttribute("id", PATTERN_ID);
-  circle.setAttribute("cx", horizontalTranslationValue);
-  circle.setAttribute("cy", verticalTranslationValue);
-  circle.setAttribute("fill", "url(#svg-pattern)");
+  const createSvg = "http://www.w3.org/2000/svg";
+  const circle = document.createElementNS(createSvg, "circle");
+  circle.setAttribute("r", radius);
+  circle.setAttribute("id", "custum-path");
+  circle.setAttribute("cx", cx);
+  circle.setAttribute("cy", cy);
+  circle.setAttribute("fill", `url(#${DEF_PATTERN_ID})`);
 
+  let styles = params.event.target.style;
+  if (styles.stroke) {
+    circle.setAttribute("stroke", styles.stroke);
+    circle.setAttribute("stroke-width", "0.2");
+    circle.setAttribute("stroke-opacity", styles.opacity);
+  }
   return circle;
 };
