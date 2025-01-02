@@ -6,7 +6,7 @@ import {
   DEF_PATTERN_ID,
 } from "./svgpattern.config.js";
 
-export const rgbToHex = (rgba) => {
+export function rgbToHex(rgba) {
   const toHex = (value) => {
     const hex = value.toString(16);
     return hex.length === 1 ? "0" + hex : hex;
@@ -20,7 +20,7 @@ export const rgbToHex = (rgba) => {
   const hexValue = `#${red}${green}${blue}`.toUpperCase();
 
   return hexValue;
-};
+}
 
 function hexToRgbValues(hex) {
   hex = hex.replace(/^#/, "");
@@ -62,22 +62,6 @@ function getPatternColor(color) {
   }
 }
 
-// const rgbToHex = (rgba) => {
-//   const toHex = (value) => {
-//     const hex = value.toString(16);
-//     return hex.length === 1 ? "0" + hex : hex;
-//   };
-
-//   const rgbaValues = rgba.match(/\d+/g).map(Number);
-
-//   const red = toHex(rgbaValues[0]).toUpperCase();
-//   const green = toHex(rgbaValues[1]).toUpperCase();
-//   const blue = toHex(rgbaValues[2]);
-//   const hexValue = `#${red}${green}${blue}`.toUpperCase();
-
-//   return hexValue;
-// };
-
 const getColumnData = (params, chart) => {
   let data = [];
   let series = chart.getOption().series;
@@ -94,6 +78,9 @@ const getValueData = (params) => {
   let data = [];
   if (params?.data?.value) {
     data.push(params.data.value);
+  }
+  if (params.componentSubType === "scatter" && params.data) {
+    data.push(...params.data);
   }
   return data;
 };
@@ -119,10 +106,7 @@ export const getClickedColor = (params) => {
 };
 
 export const eventConfiguration = (chart, onChartClicked, rows) => {
-  let chartDefPattern = getCustomSvgDefsPattern();
-  let areaDefsPattern = getCustomAreaDefsPattern();
-
-  chart.on("click", (params) => {
+  const click = (params) => {
     if (
       (params.componentSubType === "line" &&
         params.event.target.type === "ec-polygon") ||
@@ -139,152 +123,150 @@ export const eventConfiguration = (chart, onChartClicked, rows) => {
       BgColor: getClickedColor(params),
     };
 
-    // remove pattern and defs
-    let svgElement = chart.getZr().painter.root.firstChild.firstChild;
-    if (svgElement.getElementById("custum-path")) {
-      svgElement.getElementById("custum-path").remove();
-    }
-    // remove created def pattern
-    if (params.componentSubType === "line") {
-      svgElement.getElementById(DEF_PATTERN_ID) &&
-        svgElement.getElementById(DEF_PATTERN_ID).remove();
-    } else {
-      svgElement.getElementById(DEF_PATTERN_ID).parentNode.remove();
-    }
-    onChartClicked(data);
-  });
-
-  chart.on("mouseover", (params) => {
-    // if line chart, don't apply the pattern
-    if (
-      params.componentSubType !== "scatter" &&
-      params.event.target?.shape?.symbolType === "circle"
-    ) {
-      return;
-    }
-    // get modified color for pattern
-    let currentColor = getClickedColor(params);
-    if (currentColor.includes("rgba")) {
-      currentColor = rgbToHex(currentColor);
-    }
-    let modifiedColor = getPatternColor(currentColor);
-
-    let targetNode = params.event.event.target;
-    console.log("targetNode", targetNode);
-    let parentNode = targetNode.parentElement;
-    let gNode = null;
-    let constructedPath = null;
-    let defNode = null;
-    let defsPattern =
-      params.componentSubType === "line" ? areaDefsPattern : chartDefPattern;
-
-    if (!["svg", "path"].includes(targetNode.nodeName)) return;
-    let svgElement = chart.getZr().painter.root.firstChild.firstChild;
-
-    // append defs pattern to SVG Node
-    if (svgElement && !svgElement.getElementById("custum-pattern")) {
-      svgElement.appendChild(defsPattern);
-    }
-    if (
-      params.componentSubType === "line" &&
-      svgElement.getElementById("custum-pattern")
-    ) {
-      let patternIdPath = svgElement.getElementById("custum-pattern");
-      const paths = patternIdPath.querySelectorAll("path");
-      paths.forEach((path) => {
-        path.setAttribute("fill", modifiedColor);
-      });
-    } else {
-      defNode = svgElement.getElementById(DEF_PATTERN_ID).querySelector("g");
-      defNode.setAttribute("fill", modifiedColor);
-    }
-
-    // get childNodes of SVG
-    if (targetNode.nodeName === "svg") {
-      let svgChildNodes = targetNode.childNodes;
-      svgChildNodes.forEach((svgChild) => {
-        if (svgChild.nodeName === "g") {
-          gNode = svgChild;
-        }
-      });
-    }
-
-    switch (params.componentSubType) {
-      case "line": {
-        // if area and stacked area chart
-        constructedPath = getCustomSvgPath(params);
-        if (
-          params.event.target?.shape?.symbolType !== "circle" &&
-          targetNode.nodeName === "path" &&
-          !targetNode.attributes?.["stroke-linecap"]
-        ) {
-          parentNode && parentNode?.appendChild(constructedPath);
-        }
-        if (
-          params.event.target?.shape?.symbolType !== "circle" &&
-          targetNode.nodeName === "g" &&
-          targetNode.attributes?.["clip-path"]
-        ) {
-          targetNode.appendChild(constructedPath);
-        }
-        if (targetNode.nodeName === "svg") {
-          let dValue = params.event.target?.__svgPathBuilder?._str;
-          gNode.childNodes.forEach((node) => {
-            if (
-              node.childNodes[0]?.nodeName === "path" &&
-              node.childNodes[0]?.attributes?.d?.nodeValue === dValue
-            ) {
-              console.log("dValue matched path ", node);
-              node.insertBefore(constructedPath, node.firstChild);
-            }
-          });
-        }
-        break;
-      }
-      case "scatter": {
-        if (targetNode.nodeName === "path") {
-          parentNode && parentNode?.appendChild(getCustomCircleNode(params));
-        }
-        if (targetNode.nodeName === "svg") {
-          gNode.appendChild(getCustomCircleNode(params));
-        }
-        break;
-      }
-      default: {
-        constructedPath = getCustomSvgPath(params);
-        if (targetNode.nodeName === "path") {
-          parentNode && parentNode?.appendChild(constructedPath);
-        }
-        if (targetNode.nodeName === "svg") {
-          gNode.appendChild(constructedPath);
-        }
-      }
-    }
-  });
-
-  chart.on("mouseout", (params) => {
-    console.log("mouseout ", params);
-
-    // let targetNode = params.event.event.target;
-    // if (
-    //   params.componentSubType === "line" &&
-    //   targetNode.parentNode === "g" &&
-    //   targetNode.attributes?.["clip-path"]
-    // ) {
-    //   return;
-    // }
-
     let svgElement = chart.getZr().painter.root.firstChild.firstChild;
     //remove create path node
     if (svgElement.getElementById("custum-path")) {
       svgElement.getElementById("custum-path").remove();
     }
+
     // remove create def pattern
-    if (params.componentSubType === "line") {
-      svgElement.getElementById(DEF_PATTERN_ID) &&
+    if (svgElement.getElementById(DEF_PATTERN_ID)) {
+      if (params.componentSubType === "line") {
         svgElement.getElementById(DEF_PATTERN_ID).remove();
-    } else {
-      svgElement.getElementById(DEF_PATTERN_ID).parentNode.remove();
+      }
+      if (svgElement.getElementById(DEF_PATTERN_ID)?.parentNode) {
+        svgElement.getElementById(DEF_PATTERN_ID).parentNode.remove();
+      }
     }
-  });
+    onChartClicked(data);
+  };
+
+  const mouseover = (params) => {
+    let chartDefPattern = getCustomSvgDefsPattern();
+    let areaDefsPattern = getCustomAreaDefsPattern();
+    // if line chart, don't apply the pattern
+    if (
+      !(
+        params.componentSubType !== "scatter" &&
+        params.event.target?.shape?.symbolType === "circle"
+      )
+    ) {
+      // get modified color for pattern
+      let currentColor = getClickedColor(params);
+      if (currentColor.includes("rgba")) {
+        currentColor = rgbToHex(currentColor);
+      }
+      let modifiedColor = getPatternColor(currentColor);
+
+      let targetNode = params.event.event.target;
+      let parentNode = targetNode.parentElement;
+      let gNode = null;
+      let constructedPath = null;
+      let defNode = null;
+      let defsPattern =
+        params.componentSubType === "line" ? areaDefsPattern : chartDefPattern;
+
+      if (!["svg", "path"].includes(targetNode.nodeName)) return;
+      let svgElement = chart.getZr().painter.root.firstChild.firstChild;
+
+      // append defs pattern to SVG Node
+      if (svgElement && !svgElement.getElementById("custum-pattern")) {
+        svgElement.appendChild(defsPattern);
+      }
+      if (
+        params.componentSubType === "line" &&
+        svgElement.getElementById("custum-pattern")
+      ) {
+        let patternIdPath = svgElement.getElementById("custum-pattern");
+        const paths = patternIdPath.querySelectorAll("path");
+        paths.forEach((path) => {
+          path.setAttribute("fill", modifiedColor);
+        });
+      } else {
+        defNode = svgElement.getElementById(DEF_PATTERN_ID).querySelector("g");
+        defNode.setAttribute("fill", modifiedColor);
+      }
+
+      // get childNodes of SVG
+      if (targetNode.nodeName === "svg") {
+        let svgChildNodes = targetNode.childNodes;
+        svgChildNodes.forEach((svgChild) => {
+          if (svgChild.nodeName === "g") {
+            gNode = svgChild;
+          }
+        });
+      }
+
+      switch (params.componentSubType) {
+        case "line": {
+          // if area and stacked area chart
+          constructedPath = getCustomSvgPath(params);
+          if (
+            params.event.target?.shape?.symbolType !== "circle" &&
+            targetNode.nodeName === "path" &&
+            !targetNode.attributes?.["stroke-linecap"]
+          ) {
+            parentNode && parentNode?.appendChild(constructedPath);
+          }
+          if (
+            params.event.target?.shape?.symbolType !== "circle" &&
+            targetNode.nodeName === "g" &&
+            targetNode.attributes?.["clip-path"]
+          ) {
+            targetNode.appendChild(constructedPath);
+          }
+          if (targetNode.nodeName === "svg") {
+            let dValue = params.event.target?.__svgPathBuilder?._str;
+            gNode.childNodes.forEach((node) => {
+              if (
+                node.childNodes[0]?.nodeName === "path" &&
+                node.childNodes[0]?.attributes?.d?.nodeValue === dValue
+              ) {
+                node.insertBefore(constructedPath, node.firstChild);
+              }
+            });
+          }
+          break;
+        }
+        case "scatter": {
+          if (targetNode.nodeName === "path") {
+            parentNode && parentNode?.appendChild(getCustomCircleNode(params));
+          }
+          if (targetNode.nodeName === "svg") {
+            gNode.appendChild(getCustomCircleNode(params));
+          }
+          break;
+        }
+        default: {
+          constructedPath = getCustomSvgPath(params);
+          if (targetNode.nodeName === "path") {
+            parentNode && parentNode?.appendChild(constructedPath);
+          }
+          if (targetNode.nodeName === "svg") {
+            gNode.appendChild(constructedPath);
+          }
+        }
+      }
+    }
+  };
+
+  const mouseout = (params) => {
+    let svgElement = chart.getZr().painter.root.firstChild.firstChild;
+    //remove create path node
+    if (svgElement.getElementById("custum-path")) {
+      svgElement.getElementById("custum-path").remove();
+    }
+
+    // remove create def pattern
+    if (svgElement.getElementById(DEF_PATTERN_ID)) {
+      if (params.componentSubType === "line") {
+        svgElement.getElementById(DEF_PATTERN_ID).remove();
+      }
+      if (svgElement.getElementById(DEF_PATTERN_ID)?.parentNode) {
+        svgElement.getElementById(DEF_PATTERN_ID).parentNode.remove();
+      }
+    }
+  };
+
+  return { click, mouseover, mouseout };
 };

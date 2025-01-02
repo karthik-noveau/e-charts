@@ -15,17 +15,18 @@ import { lineChartOptions } from "./components/options_config/lineChart";
 function App() {
   return (
     <div className="mainContainer">
-      {/* <EChart options={pieChartOptions} /> */}
-      {/* <EChart options={DoughnutChartOptions} /> */}
-      {/* <EChart options={scatterChartOptions} /> */}
-      {/* <EChart options={horizontalBarChartOptions} /> */}
-      {/* <EChart options={verticalBarChartOptions} /> */}
-      {/* <EChart options={stackedVerticalBarChartOptions} /> */}
+      <EChart options={pieChartOptions} />
+      <EChart options={DoughnutChartOptions} />
 
-      {/* <EChart options={lineChartOptions} />  */}
+      <EChart options={scatterChartOptions} />
+      <EChart options={lineChartOptions} />
+
+      <EChart options={horizontalBarChartOptions} />
+      <EChart options={verticalBarChartOptions} />
+      <EChart options={stackedVerticalBarChartOptions} />
 
       <EChart options={basicAreaChart} />
-      {/* <EChart options={stackedAreaChartOptions} /> */}
+      <EChart options={stackedAreaChartOptions} />
     </div>
   );
 }
